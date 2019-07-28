@@ -1,4 +1,4 @@
-// The pool for rountine.
+// The pool for gorountine, suitable for high load.
 package post
 
 import (
@@ -110,11 +110,32 @@ func (this *Post) Close() {
 	}
 }
 
-func (this *Post) PutQueue(f interface{}, strictUnReflect bool, params ...interface{}) error {
+func (this *Post) PutQueue(f interface{}, params ...interface{}) error {
 	index := this.index
 	if index > 0 {
 		o := this.objects[rand.Intn(this.index)]
-		return o.PutQueueForPost(f, strictUnReflect, params)
+		return o.PutQueueForPost(f, false, params)
 	}
 	return nil
+}
+
+// Call a function with routine pool in high load situations.
+func (this *Post) PutQueueStrict(f interface{}, params ...interface{}) error {
+	index := this.index
+	if index > 0 {
+		o := this.objects[rand.Intn(this.index)]
+		return o.PutQueueForPost(f, true, params)
+	}
+	return nil
+}
+
+// Append an asynchronous task, new worker will be created dynamically by the group.
+func (this *Post) PutJob(group string, f interface{}, params ...interface{}) {
+	worker := getJobWorker(group)
+	worker.appendJob(f, false, params)
+}
+
+func (this *Post) PutJobStrict(group string, f interface{}, params ...interface{}) {
+	worker := getJobWorker(group)
+	worker.appendJob(f, true, params)
 }
