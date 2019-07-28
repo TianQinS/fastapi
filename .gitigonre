@@ -1,0 +1,9 @@
+# Normal output
+*.exe
+*.log
+*.cpuprof
+config.go
+
+# Project-local cache
+.*.swp
+.*.=un~
