@@ -4,8 +4,8 @@
 **简介**
 
 高性能，容错好。
->1. 协程池封装，基于通道(不活跃调用场景)和基于无锁队列(高负载场景)。
->2. timer模块封装，提供了不同精度的延迟函数实现，crontab设置格式同unix crontab命令字符串。
+>1. 协程池封装：基于通道(不活跃调用场景)和基于无锁队列(高负载场景)。
+>2. timer封装：提供了不同精度的延迟函数实现，crontab设置格式同unix crontab命令字符串。
 
 
 **基础模块**
@@ -31,12 +31,15 @@ import (
 func main() {
 	timer.SetQcTime("2019-03-19 23:01:40")
 	t1 := timer.AddTimer(time.Second*5, func(d int) {
-		fmt.Println(d)
+		fmt.Printf("Timer every 5 second data=%d\n", d)
 	}, 1)
 	t2 := timer.AddCrontab("1-50/2 * * * *", func() {
-		fmt.Printf("crontab %s\n", timer.GetQcTime())
+		fmt.Printf("crontab %s is fired\n", timer.GetQcTime())
 		t1.Cancel()
 	})
+	timer.CallOut(3, func(d int){
+		fmt.Printf("CallOut after 3 second data=%d\n", d)
+	}, 1)
 	time.Sleep(time.Minute * 5)
 	t2.Cancel()
 }
