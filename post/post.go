@@ -2,6 +2,7 @@
 package post
 
 import (
+	"fmt"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -9,12 +10,12 @@ import (
 )
 
 const (
-	// max sleep time in ms.
-	MAX_SLEEP_TIME = 10
 	// EsQueue Capacity.
 	ITEM_QUEUE_CAPACITY = 1024 * 1024
 	// the initial numbers of goroutine.
-	ORI_ROUTINE_NUM = 6
+	ORI_ROUTINE_NUM = 4
+	// max sleep time in ms.
+	MAX_SLEEP_TIME = 10 * time.Millisecond
 )
 
 var (
@@ -22,10 +23,11 @@ var (
 )
 
 type Post struct {
-	objects []*RpcObject
-	qSize   uint64
-	index   int
-	lock    *sync.Mutex
+	objects   []*RpcObject
+	Functions map[string]interface{}
+	qSize     uint64
+	index     int
+	lock      *sync.Mutex
 }
 
 func init() {
@@ -47,6 +49,13 @@ func (this *Post) Size() int {
 	return len(this.objects)
 }
 
+func (this *Post) Register(id string, f interface{}) {
+	if _, ok := this.Functions[id]; ok {
+		panic(fmt.Sprintf("function id %v: already registered", id))
+	}
+	this.Functions[id] = f
+}
+
 func (this *Post) AddOne() *RpcObject {
 	defer this.lock.Unlock()
 	this.lock.Lock()
@@ -60,14 +69,16 @@ func (this *Post) AddOne() *RpcObject {
 	} else {
 		o = &RpcObject{}
 		o.Init(this.qSize)
+		o.Functions = this.Functions
 	}
 
 	go func() {
 		for o.IsRun {
-			n := o.ExecuteEvent()
-			n = MAX_SLEEP_TIME - n
-			if n > 0 {
-				time.Sleep(time.Duration(n) * time.Millisecond)
+			start := time.Now()
+			o.ExecuteEvent()
+			delta := MAX_SLEEP_TIME - time.Now().Sub(start)
+			if delta > 0 {
+				time.Sleep(delta)
 			} else {
 				runtime.Gosched()
 			}
