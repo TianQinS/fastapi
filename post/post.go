@@ -4,18 +4,14 @@ package post
 import (
 	"fmt"
 	"math/rand"
-	"runtime"
 	"sync"
-	"time"
 )
 
 const (
 	// EsQueue Capacity.
 	ITEM_QUEUE_CAPACITY = 1024 * 1024
 	// the initial numbers of goroutine.
-	ORI_ROUTINE_NUM = 4
-	// max sleep time in ms.
-	MAX_SLEEP_TIME = 10 * time.Millisecond
+	ORI_ROUTINE_NUM = 3
 )
 
 var (
@@ -24,6 +20,7 @@ var (
 
 type Post struct {
 	objects   []*RpcObject
+	object    *RpcObject
 	Functions map[string]interface{}
 	qSize     uint64
 	index     int
@@ -39,10 +36,26 @@ func NewPost(queueCapacity uint64, oriNum int) *Post {
 		index:   0,
 		qSize:   queueCapacity,
 		objects: make([]*RpcObject, 0, oriNum),
+		object:  nil,
 		lock:    new(sync.Mutex),
 	}
+	p.CreateSpecObject()
 	p.AddObjects(oriNum)
 	return p
+}
+
+func (this *Post) makeObject() *RpcObject {
+	o := &RpcObject{}
+	o.Init(this.qSize)
+	o.Functions = this.Functions
+	o.IsRun = true
+	return o
+}
+
+func (this *Post) CreateSpecObject() {
+	o := this.makeObject()
+	go o.Loop()
+	this.object = o
 }
 
 func (this *Post) Size() int {
@@ -67,23 +80,10 @@ func (this *Post) AddOne() *RpcObject {
 			o.IsRun = true
 		}
 	} else {
-		o = &RpcObject{}
-		o.Init(this.qSize)
-		o.Functions = this.Functions
+		o = this.makeObject()
 	}
 
-	go func() {
-		for o.IsRun {
-			start := time.Now()
-			o.ExecuteEvent()
-			delta := MAX_SLEEP_TIME - time.Now().Sub(start)
-			if delta > 0 {
-				time.Sleep(delta)
-			} else {
-				runtime.Gosched()
-			}
-		}
-	}()
+	go o.Loop()
 	this.objects = append(this.objects, o)
 	this.index++
 	return o
@@ -119,8 +119,13 @@ func (this *Post) Close() {
 			o.ExecuteEventSafe()
 		}
 	}
+	if this.object.IsRun {
+		this.object.IsRun = false
+		this.object.ExecuteEventSafe()
+	}
 }
 
+// Call a function with routine pool in high load situations.
 func (this *Post) PutQueue(f interface{}, params ...interface{}) error {
 	index := this.index
 	if index > 0 {
@@ -130,7 +135,11 @@ func (this *Post) PutQueue(f interface{}, params ...interface{}) error {
 	return nil
 }
 
-// Call a function with routine pool in high load situations.
+// Call a function in a special routine.
+func (this *Post) PutQueueSpec(f interface{}, params ...interface{}) error {
+	return this.object.PutQueueForPost(f, false, params)
+}
+
 func (this *Post) PutQueueStrict(f interface{}, params ...interface{}) error {
 	index := this.index
 	if index > 0 {
@@ -138,6 +147,10 @@ func (this *Post) PutQueueStrict(f interface{}, params ...interface{}) error {
 		return o.PutQueueForPost(f, true, params)
 	}
 	return nil
+}
+
+func (this *Post) PutQueueSpecStrict(f interface{}, params ...interface{}) error {
+	return this.object.PutQueueForPost(f, true, params)
 }
 
 // Append an asynchronous task, new worker will be created dynamically by the group.

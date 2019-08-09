@@ -63,7 +63,7 @@ func CatchWithReflect(f interface{}, args ...interface{}) (err error) {
 	}()
 	_f := reflect.ValueOf(f)
 	in := make([]reflect.Value, len(args))
-	for k, _ := range in {
+	for k := range in {
 		in[k] = reflect.ValueOf(args[k])
 	}
 	_f.Call(in)

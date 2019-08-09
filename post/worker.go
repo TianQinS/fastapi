@@ -66,7 +66,7 @@ func (this *JobWorker) loop() {
 			} else {
 				_f := reflect.ValueOf(msg.Func)
 				in := make([]reflect.Value, len(msg.Params))
-				for k, _ := range in {
+				for k := range in {
 					in[k] = reflect.ValueOf(msg.Params[k])
 				}
 				_f.Call(in)

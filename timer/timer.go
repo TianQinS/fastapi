@@ -91,7 +91,7 @@ func Add(d time.Duration, f interface{}, repeat bool, args []interface{}) *Timer
 
 	timerHeapLock.Lock()
 	t.addseq = nextAddSeq
-	nextAddSeq += 1
+	nextAddSeq++
 	heap.Push(&timerHeap, t)
 	timerHeapLock.Unlock()
 	return t
@@ -136,7 +136,7 @@ func Tick() {
 				t.fireTime = now.Add(t.interval)
 			}
 			t.addseq = nextAddSeq
-			nextAddSeq += 1
+			nextAddSeq++
 			// Add Timer back to heap
 			heap.Push(&timerHeap, t)
 		} else {

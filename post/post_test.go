@@ -38,6 +38,13 @@ func TestPost(t *testing.T) {
 	time.Sleep(15 * time.Millisecond)
 	assert.Equal(t, 0, a)
 
+	p.PutQueueSpec(func(d *int) {
+		*d = 2
+		fmt.Println(d, *d)
+	}, &a)
+	time.Sleep(15 * time.Millisecond)
+	assert.Equal(t, 2, a)
+
 	p.AddOne()
 	p.PutQueue(func(d *int) {
 		*d = 1

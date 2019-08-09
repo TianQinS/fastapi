@@ -3,9 +3,16 @@ package post
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"sync"
+	"time"
 
 	"github.com/TianQinS/fastapi/basic"
+)
+
+const (
+	// max sleep time in ms.
+	MAX_SLEEP_TIME = 10 * time.Millisecond
 )
 
 type QueueMsg struct {
@@ -67,18 +74,16 @@ func (this *RpcObject) PutQueue(f interface{}, strictUnReflect bool, params ...i
 	ok, quantity := this.Queue.Put(this.newMsg(f, params, strictUnReflect))
 	if !ok {
 		return fmt.Errorf("Put Fail, quantity:%v\n", quantity)
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (this *RpcObject) PutQueueForPost(f interface{}, strictUnReflect bool, params []interface{}) error {
 	ok, quantity := this.Queue.Put(this.newMsg(f, params, strictUnReflect))
 	if !ok {
 		return fmt.Errorf("Put Fail, quantity:%v\n", quantity)
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (this *RpcObject) executeEvent(cnt uint64, vals *[]interface{}) {
@@ -111,7 +116,7 @@ LOOP:
 			} else {
 				_f := reflect.ValueOf(function)
 				in := make([]reflect.Value, len(msg.Params))
-				for k, _ := range in {
+				for k := range in {
 					in[k] = reflect.ValueOf(msg.Params[k])
 				}
 				_f.Call(in)
@@ -136,4 +141,18 @@ func (this *RpcObject) ExecuteEventSafe() uint64 {
 	cnt, _ := this.Queue.Gets(vals)
 	this.executeEvent(cnt, &vals)
 	return cnt
+}
+
+// The main loop of RpcObject.
+func (this *RpcObject) Loop() {
+	for this.IsRun {
+		start := time.Now()
+		this.ExecuteEvent()
+		delta := MAX_SLEEP_TIME - time.Now().Sub(start)
+		if delta > 0 {
+			time.Sleep(delta)
+		} else {
+			runtime.Gosched()
+		}
+	}
 }
