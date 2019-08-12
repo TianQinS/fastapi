@@ -3,6 +3,7 @@ package basic
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -10,7 +11,7 @@ import (
 
 const (
 	OVERFLOW_CHECK_NUM = uint64(2 << 60)
-	UINT64_MAX_NUM     = ^uint64(0)
+	UINT64_MAX_NUM     = math.MaxUint64 // ^uint64(0)
 )
 
 type esCache struct {

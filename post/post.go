@@ -20,7 +20,7 @@ var (
 
 type Post struct {
 	objects   []*RpcObject
-	object    *RpcObject
+	Object    *RpcObject
 	Functions map[string]interface{}
 	qSize     uint64
 	index     int
@@ -36,7 +36,7 @@ func NewPost(queueCapacity uint64, oriNum int) *Post {
 		index:   0,
 		qSize:   queueCapacity,
 		objects: make([]*RpcObject, 0, oriNum),
-		object:  nil,
+		Object:  nil,
 		lock:    new(sync.Mutex),
 	}
 	p.CreateSpecObject()
@@ -55,7 +55,7 @@ func (this *Post) makeObject() *RpcObject {
 func (this *Post) CreateSpecObject() {
 	o := this.makeObject()
 	go o.Loop()
-	this.object = o
+	this.Object = o
 }
 
 func (this *Post) Size() int {
@@ -119,9 +119,9 @@ func (this *Post) Close() {
 			o.ExecuteEventSafe()
 		}
 	}
-	if this.object.IsRun {
-		this.object.IsRun = false
-		this.object.ExecuteEventSafe()
+	if this.Object.IsRun {
+		this.Object.IsRun = false
+		this.Object.ExecuteEventSafe()
 	}
 }
 
@@ -137,7 +137,7 @@ func (this *Post) PutQueue(f interface{}, params ...interface{}) error {
 
 // Call a function in a special routine.
 func (this *Post) PutQueueSpec(f interface{}, params ...interface{}) error {
-	return this.object.PutQueueForPost(f, false, params)
+	return this.Object.PutQueueForPost(f, false, params)
 }
 
 func (this *Post) PutQueueStrict(f interface{}, params ...interface{}) error {
@@ -150,7 +150,7 @@ func (this *Post) PutQueueStrict(f interface{}, params ...interface{}) error {
 }
 
 func (this *Post) PutQueueSpecStrict(f interface{}, params ...interface{}) error {
-	return this.object.PutQueueForPost(f, true, params)
+	return this.Object.PutQueueForPost(f, true, params)
 }
 
 // Append an asynchronous task, new worker will be created dynamically by the group.
