@@ -2,6 +2,7 @@
 package basic
 
 import (
+	"fmt"
 	"reflect"
 	"runtime/debug"
 )
@@ -38,6 +39,7 @@ func PackErrorMsg(err error, args interface{}) map[string]interface{} {
 	msg["args"] = args
 	msg["trace"] = string(debug.Stack())
 	// mail.SendMsg(msg)
+	fmt.Println(msg)
 	return msg
 }
 

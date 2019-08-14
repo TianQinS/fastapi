@@ -156,3 +156,8 @@ func (this *RpcObject) Loop() {
 		}
 	}
 }
+
+func (this *RpcObject) Close() {
+	this.IsRun = false
+	this.ExecuteEventSafe()
+}

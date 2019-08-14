@@ -102,8 +102,7 @@ func (this *Post) DelOne() {
 	index := this.index - 1
 	if index >= 0 {
 		o := this.objects[index]
-		o.IsRun = false
-		o.ExecuteEventSafe()
+		o.Close()
 		this.index = index
 	}
 }
@@ -115,13 +114,11 @@ func (this *Post) Close() {
 	if this.Size() > 0 {
 		for _, o := range this.objects {
 			this.index--
-			o.IsRun = false
-			o.ExecuteEventSafe()
+			o.Close()
 		}
 	}
 	if this.Object.IsRun {
-		this.Object.IsRun = false
-		this.Object.ExecuteEventSafe()
+		this.Object.Close()
 	}
 }
 
