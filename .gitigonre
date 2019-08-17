@@ -7,3 +7,5 @@ config.go
 # Project-local cache
 .*.swp
 .*.=un~
+
+vendor/*
