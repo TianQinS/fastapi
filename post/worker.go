@@ -45,6 +45,7 @@ func getJobWorker(group string) (worker *JobWorker) {
 	if worker == nil {
 		JobWorkersLock.Lock()
 		worker = newJobWorker()
+		fmt.Printf("[newJobWorker] group=%s\n", group)
 		JobWorkers[group] = worker
 		JobWorkersLock.Unlock()
 	}
@@ -82,6 +83,10 @@ func (this *JobWorker) appendJob(f interface{}, strictUnReflect bool, params []i
 
 func Close() bool {
 	var cleared bool
+	// Close the global gorountine pool.
+	if GPost != nil {
+		GPost.Close()
+	}
 	// Close all job queue workers
 	fmt.Println("Waiting for all async job workers to be cleared ...")
 	JobWorkersLock.Lock()
@@ -95,6 +100,7 @@ func Close() bool {
 	}
 	JobWorkersLock.Unlock()
 
+	// numJobWorkersRunning.Done() as numJobWorkersRunning.Add(-1)
 	// wait for all job workers to quit
 	numJobWorkersRunning.Wait()
 	return cleared
