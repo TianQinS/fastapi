@@ -4,8 +4,11 @@ package timer
 
 import (
 	"container/heap"
+	"runtime"
 	"sync"
 	"time"
+
+	"github.com/TianQinS/fastapi/basic"
 )
 
 const (
@@ -21,6 +24,8 @@ var (
 	nextAddSeq    uint
 	timerHeap     TimerHeap
 	timerHeapLock sync.Mutex
+	// the global hook.
+	Hook = basic.HookMgr
 )
 
 type Timer struct {
@@ -147,8 +152,15 @@ func Tick() {
 
 func selfTickRoutine(tickInterval time.Duration) {
 	for {
-		time.Sleep(tickInterval)
+		start := time.Now()
 		Tick()
+		GPost.PutQueue(Hook.Fire, "10ms")
+		delta := tickInterval - time.Now().Sub(start)
+		if delta > 0 {
+			time.Sleep(delta)
+		} else {
+			runtime.Gosched()
+		}
 	}
 }
 

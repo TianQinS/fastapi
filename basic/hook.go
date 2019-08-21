@@ -28,9 +28,9 @@ type Hooks map[string][]Hook
 func (this Hooks) Fire(key string, args ...interface{}) (err error) {
 	if hooks, ok := this[key]; ok {
 		for _, hook := range hooks {
-			if hook.Timeout() {
+			/*if hook.Timeout() {
 				continue
-			}
+			}*/
 			hook.Fire(args...)
 		}
 	}
