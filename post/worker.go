@@ -45,7 +45,7 @@ func getJobWorker(group string) (worker *JobWorker) {
 	if worker == nil {
 		JobWorkersLock.Lock()
 		worker = newJobWorker()
-		fmt.Printf("[newJobWorker] group=%s\n", group)
+		fmt.Printf("[NewJobWorker] group=%s\n", group)
 		JobWorkers[group] = worker
 		JobWorkersLock.Unlock()
 	}
@@ -93,7 +93,7 @@ func Close() bool {
 	if len(JobWorkers) > 0 {
 		for group, worker := range JobWorkers {
 			close(worker.jobQueue)
-			fmt.Printf("\tclear %s\n", group)
+			fmt.Printf("Clear %s\n", group)
 		}
 		JobWorkers = map[string]*JobWorker{}
 		cleared = true

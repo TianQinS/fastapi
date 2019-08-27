@@ -40,7 +40,7 @@ func (this *QueueMsg) Init(f interface{}, params []interface{}, strict bool) {
 func (this *RpcObject) Init(qSize uint64) {
 	this.Functions = map[string]interface{}{}
 	this.Queue = basic.NewQueue(qSize)
-	this.Vals = make([]interface{}, qSize)
+	this.Vals = make([]interface{}, qSize, qSize)
 	this.IsRun = true
 }
 
