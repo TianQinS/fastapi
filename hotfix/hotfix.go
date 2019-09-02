@@ -31,6 +31,9 @@ func (this *HotFix) addPkg(pkgName string) {
 	if pkgName == this.outExclude {
 		return
 	}
+	if strings.Contains(pkgName, "internal/") {
+		return
+	}
 	if _, ok := this.mods[pkgName]; ok {
 		return
 	}
@@ -47,9 +50,12 @@ func (this *HotFix) addPkg(pkgName string) {
 func (this *HotFix) parsePkg(pkgName string) error {
 	p, err := importer.For("source", nil).Import(pkgName)
 	if err != nil {
-		// basic.PackErrorMsg(err, pkgName)
-		fmt.Println(err)
-		return err
+		p, err = importer.For("gc", nil).Import(pkgName)
+		if err != nil {
+			// basic.PackErrorMsg(err, pkgName)
+			fmt.Println(err)
+			return err
+		}
 	}
 	for _, pkg := range p.Imports() {
 		this.addPkg(pkg.Path())

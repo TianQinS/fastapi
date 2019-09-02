@@ -88,6 +88,7 @@ func main(){
 Hotfix evaluate the script in the context of interpreter and change variables in runtime context with parameter passing.
 
 ```go
+/* github.com/TianQinS/commserv/module/rpcmodule.go */
 // forTest is used for scripts's sample2.
 func (rpc *RPCModule) forTest(arg1, arg2 string) string {
 	return fmt.Sprintf("args: %s, %s.", arg1, arg2)
@@ -103,6 +104,7 @@ func (rpc *RPCModule) OnInit(topic string, qSize uint64) {
 - A rpc module written by golang with a test function registered for hotfix testing.
 
 ```python
+u"""github.com/TianQinS/commserv/scripts/sample2.py."""
 if __name__ == "__main__":
 	u"""for hotfix testing."""
 	rpc = RDB(**config.REDIS_CONFIG)

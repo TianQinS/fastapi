@@ -48,10 +48,10 @@ package {{.Dest}}
 import (
 {{- range $key, $value := .Imports }}
 	{{- if $value}}
-	"{{$key}}"
+	{{formatI $key}}
 	{{- end}}
 {{- end}}
-	"{{.PkgName}}"
+	{{formatI .PkgName}}
 	"reflect"
 )
 
@@ -135,7 +135,9 @@ type Wrap struct {
 func genContent(dest, pkgName, license string) ([]byte, error) {
 	p, err := importer.For("source", nil).Import(pkgName)
 	if err != nil {
-		return nil, err
+		if p, err = importer.For("gc", nil).Import(pkgName); err != nil {
+			return nil, err
+		}
 	}
 
 	prefix := "_" + pkgName + "_"
@@ -163,7 +165,12 @@ func genContent(dest, pkgName, license string) ([]byte, error) {
 			continue
 		}
 
-		pname := path.Base(pkgName) + "." + name
+		pbase := path.Base(pkgName)
+		// for "gopkg.in/mgo.v2".
+		if strings.Contains(pbase, ".") {
+			pbase = strings.ReplaceAll(pbase, ".", "")
+		}
+		pname := pbase + "." + name
 		switch o := o.(type) {
 		case *types.Const:
 			val[name] = Val{fixConst(pname, o.Val()), false}
@@ -231,7 +238,17 @@ func genContent(dest, pkgName, license string) ([]byte, error) {
 		buildTags = currentGoVersion + ",!" + nextGoVersion
 	}
 
-	base := template.New("goexports")
+	base := template.New("goexports").Funcs(map[string]interface{}{
+		"formatI": func(s string) string {
+			sbase := path.Base(s)
+			_sbase := strings.ReplaceAll(sbase, ".", "")
+			if _sbase == sbase {
+				return fmt.Sprintf("\"%s\"", s)
+			} else {
+				return fmt.Sprintf("%s \"%s\"", _sbase, s)
+			}
+		},
+	})
 	parse, err := base.Parse(model)
 	if err != nil {
 		return nil, fmt.Errorf("template parsing error: %v", err)
