@@ -3,7 +3,6 @@ package post
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 )
 
@@ -24,6 +23,7 @@ type Post struct {
 	Functions map[string]interface{}
 	qSize     uint64
 	index     int
+	curIndex  int
 	lock      *sync.Mutex
 }
 
@@ -33,11 +33,12 @@ func init() {
 
 func NewPost(queueCapacity uint64, oriNum int) *Post {
 	p := &Post{
-		index:   0,
-		qSize:   queueCapacity,
-		objects: make([]*RpcObject, 0, oriNum),
-		Object:  nil,
-		lock:    new(sync.Mutex),
+		index:    0,
+		curIndex: 0,
+		qSize:    queueCapacity,
+		objects:  make([]*RpcObject, 0, oriNum),
+		Object:   nil,
+		lock:     new(sync.Mutex),
 	}
 	p.CreateSpecObject()
 	p.AddObjects(oriNum)
@@ -126,7 +127,13 @@ func (this *Post) Close() {
 func (this *Post) PutQueue(f interface{}, params ...interface{}) error {
 	index := this.index
 	if index > 0 {
-		o := this.objects[rand.Intn(this.index)]
+		this.curIndex++
+		seq := this.curIndex
+		if seq >= index {
+			seq = 0
+			this.curIndex = 0
+		}
+		o := this.objects[seq]
 		return o.PutQueueForPost(f, false, params)
 	}
 	return nil
@@ -140,7 +147,13 @@ func (this *Post) PutQueueSpec(f interface{}, params ...interface{}) error {
 func (this *Post) PutQueueStrict(f interface{}, params ...interface{}) error {
 	index := this.index
 	if index > 0 {
-		o := this.objects[rand.Intn(this.index)]
+		this.curIndex++
+		seq := this.curIndex
+		if seq >= index {
+			seq = 0
+			this.curIndex = 0
+		}
+		o := this.objects[seq]
 		return o.PutQueueForPost(f, true, params)
 	}
 	return nil

@@ -24,6 +24,7 @@ func NewHotFix(stdlibs, prefix string, mods ...string) *HotFix {
 	return hot
 }
 
+// addPkg only filter required dependencies what is necessary.
 func (this *HotFix) addPkg(pkgName string) {
 	if pkgName == "" {
 		return

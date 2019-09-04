@@ -135,6 +135,7 @@ type Wrap struct {
 func genContent(dest, pkgName, license string) ([]byte, error) {
 	p, err := importer.For("source", nil).Import(pkgName)
 	if err != nil {
+		// for github.com/go-redis/redis/v7/internal/*
 		if p, err = importer.For("gc", nil).Import(pkgName); err != nil {
 			return nil, err
 		}
@@ -240,13 +241,13 @@ func genContent(dest, pkgName, license string) ([]byte, error) {
 
 	base := template.New("goexports").Funcs(map[string]interface{}{
 		"formatI": func(s string) string {
+			// a unique format for module.
 			sbase := path.Base(s)
 			_sbase := strings.ReplaceAll(sbase, ".", "")
 			if _sbase == sbase {
 				return fmt.Sprintf("\"%s\"", s)
-			} else {
-				return fmt.Sprintf("%s \"%s\"", _sbase, s)
 			}
+			return fmt.Sprintf("%s \"%s\"", _sbase, s)
 		},
 	})
 	parse, err := base.Parse(model)
