@@ -12,7 +12,7 @@ import (
 
 const (
 	// max sleep time in ms.
-	MAX_SLEEP_TIME = 10 * time.Millisecond
+	MAX_SLEEP_TIME = 10000 * time.Microsecond
 )
 
 type QueueMsg struct {
