@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// max sleep time in ms.
+	// MAX_SLEEP_TIME represents max sleep time in ms.
 	MAX_SLEEP_TIME = 10000 * time.Microsecond
 )
 
