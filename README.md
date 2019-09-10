@@ -3,7 +3,7 @@
 
 **简介**
 
-高性能，协程池，在线更新。
+便捷封装，协程池，在线更新。
 >1. post：协程池，基于通道(不活跃调用场景)和基于无锁队列(高负载场景)。
 >2. timer：提供了不同精度的延迟函数实现，crontab设置格式同unix crontab命令字符串，降低内置计时器堆负载。
 >3. hotfix：提供对register functions(结合commserv模块)和public variable的在线更新功能。

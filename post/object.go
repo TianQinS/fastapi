@@ -11,13 +11,15 @@ import (
 )
 
 const (
-	// MAX_SLEEP_TIME represents max sleep time in ms.
+	// max sleep time in ms.
 	MAX_SLEEP_TIME = 10000 * time.Microsecond
 )
 
 type QueueMsg struct {
 	Func            interface{}
+	Callback        interface{}
 	Params          []interface{}
+	CallbackParams  []interface{}
 	StrictUnReflect bool
 }
 
@@ -31,9 +33,11 @@ type RpcObject struct {
 	itemPool sync.Pool
 }
 
-func (this *QueueMsg) Init(f interface{}, params []interface{}, strict bool) {
+func (this *QueueMsg) Init(f, cb interface{}, params, cbParams []interface{}, strict bool) {
 	this.Func = f
+	this.Callback = cb
 	this.Params = params
+	this.CallbackParams = cbParams
 	this.StrictUnReflect = strict
 }
 
@@ -53,15 +57,17 @@ func (this *RpcObject) Register(id string, f interface{}) {
 	this.Functions[id] = f
 }
 
-func (this *RpcObject) newMsg(f interface{}, params []interface{}, strict bool) *QueueMsg {
+func (this *RpcObject) newMsg(f, cb interface{}, params, cbParams []interface{}, strict bool) *QueueMsg {
 	item, ok := this.itemPool.Get().(*QueueMsg)
 	if ok {
-		item.Init(f, params, strict)
+		item.Init(f, cb, params, cbParams, strict)
 		return item
 	}
 	return &QueueMsg{
 		Func:            f,
+		Callback:        cb,
 		Params:          params,
+		CallbackParams:  cbParams,
 		StrictUnReflect: strict,
 	}
 }
@@ -71,7 +77,16 @@ func (this *RpcObject) releaseMsg(item *QueueMsg) {
 }
 
 func (this *RpcObject) PutQueue(f interface{}, strictUnReflect bool, params ...interface{}) error {
-	ok, quantity := this.Queue.Put(this.newMsg(f, params, strictUnReflect))
+	ok, quantity := this.Queue.Put(this.newMsg(f, nil, params, nil, strictUnReflect))
+	if !ok {
+		return fmt.Errorf("Put Fail, quantity:%v\n", quantity)
+	}
+	return nil
+}
+
+func (this *RpcObject) PutQueueWithCallback(f, cb interface{}, strictUnReflect bool, cbParams, params []interface{}) error {
+	ok, quantity := this.Queue.Put(this.newMsg(f, cb, params, cbParams, strictUnReflect))
+	fmt.Println(ok, f, cb, quantity, params)
 	if !ok {
 		return fmt.Errorf("Put Fail, quantity:%v\n", quantity)
 	}
@@ -79,7 +94,7 @@ func (this *RpcObject) PutQueue(f interface{}, strictUnReflect bool, params ...i
 }
 
 func (this *RpcObject) PutQueueForPost(f interface{}, strictUnReflect bool, params []interface{}) error {
-	ok, quantity := this.Queue.Put(this.newMsg(f, params, strictUnReflect))
+	ok, quantity := this.Queue.Put(this.newMsg(f, nil, params, nil, strictUnReflect))
 	if !ok {
 		return fmt.Errorf("Put Fail, quantity:%v\n", quantity)
 	}
@@ -119,7 +134,20 @@ LOOP:
 				for k := range in {
 					in[k] = reflect.ValueOf(msg.Params[k])
 				}
-				_f.Call(in)
+
+				rets := _f.Call(in)
+				// fmt.Println(cnt, msg.Func, msg.Params, rets)
+				// process callback logic.
+				if cb := msg.Callback; cb != nil {
+					_f = reflect.ValueOf(cb)
+					params := msg.CallbackParams
+					if params != nil {
+						for k := range params {
+							rets = append([]reflect.Value{reflect.ValueOf(params[k])}, rets...)
+						}
+					}
+					_f.Call(rets)
+				}
 			}
 		}
 		_runFunc()

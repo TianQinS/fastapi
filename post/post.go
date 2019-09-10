@@ -33,12 +33,13 @@ func init() {
 
 func NewPost(queueCapacity uint64, oriNum int) *Post {
 	p := &Post{
-		index:    0,
-		curIndex: 0,
-		qSize:    queueCapacity,
-		objects:  make([]*RpcObject, 0, oriNum),
-		Object:   nil,
-		lock:     new(sync.Mutex),
+		index:     0,
+		curIndex:  0,
+		qSize:     queueCapacity,
+		objects:   make([]*RpcObject, 0, oriNum),
+		Object:    nil,
+		Functions: make(map[string]interface{}),
+		lock:      new(sync.Mutex),
 	}
 	p.CreateSpecObject()
 	p.AddObjects(oriNum)
@@ -139,6 +140,21 @@ func (this *Post) PutQueue(f interface{}, params ...interface{}) error {
 	return nil
 }
 
+func (this *Post) PutQueueWithCallback(f, cb interface{}, cbParams []interface{}, params ...interface{}) error {
+	index := this.index
+	if index > 0 {
+		this.curIndex++
+		seq := this.curIndex
+		if seq >= index {
+			seq = 0
+			this.curIndex = 0
+		}
+		o := this.objects[seq]
+		return o.PutQueueWithCallback(f, cb, false, cbParams, params)
+	}
+	return nil
+}
+
 // Call a function in a special routine.
 func (this *Post) PutQueueSpec(f interface{}, params ...interface{}) error {
 	return this.Object.PutQueueForPost(f, false, params)
@@ -167,6 +183,11 @@ func (this *Post) PutQueueSpecStrict(f interface{}, params ...interface{}) error
 func (this *Post) PutJob(group string, f interface{}, params ...interface{}) {
 	worker := getJobWorker(group)
 	worker.appendJob(f, false, params)
+}
+
+func (this *Post) PutJobWithCallback(group string, f, cb interface{}, cbParams []interface{}, params ...interface{}) {
+	worker := getJobWorker(group)
+	worker.appendJobWithCallback(f, cb, cbParams, params)
 }
 
 func (this *Post) PutJobStrict(group string, f interface{}, params ...interface{}) {

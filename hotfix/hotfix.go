@@ -11,16 +11,16 @@ import (
 )
 
 type HotFix struct {
-	prefix     string
+	prefixes   []string
 	outDir     string
 	outExclude string
 	mods       map[string]bool
 }
 
 // NewHotFix make a HotFix object that contains relevant information of hotfix.
-func NewHotFix(stdlibs, prefix string, mods ...string) *HotFix {
+func NewHotFix(stdlibs string, prefixes []string, mods ...string) *HotFix {
 	hot := &HotFix{}
-	hot.Init(stdlibs, prefix, mods...)
+	hot.Init(stdlibs, prefixes, mods...)
 	return hot
 }
 
@@ -39,12 +39,15 @@ func (this *HotFix) addPkg(pkgName string) {
 		return
 	}
 	fmt.Println(pkgName)
-	if strings.HasPrefix(pkgName, this.prefix) {
-		this.mods[pkgName] = true
-		this.parsePkg(pkgName)
-	} else {
-		this.mods[pkgName] = false
+	for _, prefix := range this.prefixes {
+		if strings.HasPrefix(pkgName, prefix) {
+			this.mods[pkgName] = true
+			this.parsePkg(pkgName)
+			return
+		}
 	}
+
+	this.mods[pkgName] = false
 }
 
 // parsePkg parse the dependencies of `pkgName` module.
@@ -77,8 +80,8 @@ func (this *HotFix) loadPkgs() {
 // Init create a stdlib directory in you `outputDir` and make Symbol files for dependent packages,
 // these Symbol files will be updated when this function is called.
 // Modules in mods with the prefix `modPrefix` will be parsed(dependency chain) with recursion.
-func (this *HotFix) Init(outputDir, modPrefix string, mods ...string) {
-	this.prefix = modPrefix
+func (this *HotFix) Init(outputDir string, modPrefix []string, mods ...string) {
+	this.prefixes = modPrefix
 	this.outDir = path.Join(strings.Replace(os.Getenv("GOPATH"), "\\", "/", -1), "src", outputDir, "stdlibs")
 	this.outExclude = path.Join(outputDir, "stdlibs")
 	this.mods = make(map[string]bool, len(mods))

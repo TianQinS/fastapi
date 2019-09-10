@@ -70,7 +70,18 @@ func (this *JobWorker) loop() {
 				for k := range in {
 					in[k] = reflect.ValueOf(msg.Params[k])
 				}
-				_f.Call(in)
+
+				rets := _f.Call(in)
+				if cb := msg.Callback; cb != nil {
+					_f = reflect.ValueOf(cb)
+					params := msg.CallbackParams
+					if params != nil {
+						for k := range params {
+							rets = append([]reflect.Value{reflect.ValueOf(params[k])}, rets...)
+						}
+					}
+					_f.Call(rets)
+				}
 			}
 		}
 		_runFunc()
@@ -78,7 +89,11 @@ func (this *JobWorker) loop() {
 }
 
 func (this *JobWorker) appendJob(f interface{}, strictUnReflect bool, params []interface{}) {
-	this.jobQueue <- QueueMsg{f, params, strictUnReflect}
+	this.jobQueue <- QueueMsg{f, nil, params, nil, strictUnReflect}
+}
+
+func (this *JobWorker) appendJobWithCallback(f, cb interface{}, cbParams, params []interface{}) {
+	this.jobQueue <- QueueMsg{f, cb, params, cbParams, false}
 }
 
 func Close() bool {
