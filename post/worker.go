@@ -57,8 +57,16 @@ func (this *JobWorker) loop() {
 	for msg := range this.jobQueue {
 		_runFunc := func() {
 			defer func() {
-				if e, ok := recover().(error); ok {
-					basic.PackErrorMsg(e, msg)
+				info := recover()
+				switch info.(type) {
+				case error:
+					basic.PackErrorMsg(info.(error), msg)
+				case string:
+					basic.PackErrorMsg(fmt.Errorf("%s", info.(string)), msg)
+				default:
+					if info != nil {
+						basic.PackErrorMsg(fmt.Errorf("%+v", info), msg)
+					}
 				}
 			}()
 

@@ -86,7 +86,7 @@ func (this *RpcObject) PutQueue(f interface{}, strictUnReflect bool, params ...i
 
 func (this *RpcObject) PutQueueWithCallback(f, cb interface{}, strictUnReflect bool, cbParams, params []interface{}) error {
 	ok, quantity := this.Queue.Put(this.newMsg(f, cb, params, cbParams, strictUnReflect))
-	fmt.Println(ok, f, cb, quantity, params)
+	// fmt.Println(ok, f, cb, quantity, params)
 	if !ok {
 		return fmt.Errorf("Put Fail, quantity:%v\n", quantity)
 	}
@@ -121,8 +121,16 @@ LOOP:
 		}
 		_runFunc := func() {
 			defer func() {
-				if e, ok := recover().(error); ok {
-					basic.PackErrorMsg(e, msg)
+				info := recover()
+				switch info.(type) {
+				case error:
+					basic.PackErrorMsg(info.(error), msg)
+				case string:
+					basic.PackErrorMsg(fmt.Errorf("%s", info.(string)), msg)
+				default:
+					if info != nil {
+						basic.PackErrorMsg(fmt.Errorf("%+v", info), msg)
+					}
 				}
 			}()
 
