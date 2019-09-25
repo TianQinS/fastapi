@@ -126,7 +126,7 @@ LOOP:
 				case error:
 					basic.PackErrorMsg(info.(error), msg)
 				case string:
-					basic.PackErrorMsg(fmt.Errorf("%s", info.(string)), msg)
+					basic.PackErrorMsg(fmt.Errorf("%s->%s", info.(string), runtime.FuncForPC(reflect.ValueOf(function).Pointer()).Name()), fmt.Sprintf("%+v", msg))
 				default:
 					if info != nil {
 						basic.PackErrorMsg(fmt.Errorf("%+v", info), msg)
