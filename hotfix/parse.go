@@ -1,7 +1,7 @@
 //go:generate go build
 
 /*
-Goexports generates wrappers of package exported symbols
+Goexports generates wrappers of package exported symbols.
 
 Output files are written in the current directory, and prefixed with the go version.
 
@@ -25,6 +25,7 @@ import (
 	"go/constant"
 	"go/format"
 	"go/importer"
+	"go/token"
 	"go/types"
 	"io/ioutil"
 	"log"
@@ -133,7 +134,8 @@ type Wrap struct {
 }
 
 func genContent(dest, pkgName, license string) ([]byte, error) {
-	p, err := importer.For("source", nil).Import(pkgName)
+	// p, err := importer.For("source", nil).Import(pkgName)
+	p, err := importer.ForCompiler(token.NewFileSet(), "source", nil).Import(pkgName)
 	if err != nil {
 		// for github.com/go-redis/redis/v7/internal/*
 		if p, err = importer.For("gc", nil).Import(pkgName); err != nil {
@@ -174,7 +176,13 @@ func genContent(dest, pkgName, license string) ([]byte, error) {
 		pname := pbase + "." + name
 		switch o := o.(type) {
 		case *types.Const:
-			val[name] = Val{fixConst(pname, o.Val()), false}
+			// val[name] = Val{fixConst(pname, o.Val()), false}
+			if b, ok := o.Type().(*types.Basic); ok && (b.Info()&types.IsUntyped) != 0 {
+				// convert untyped constant to right type to avoid overflow
+				val[name] = Val{fixConst(pname, o.Val()), false}
+			} else {
+				val[name] = Val{pname, false}
+			}
 		case *types.Func:
 			val[name] = Val{pname, false}
 		case *types.Var:
@@ -285,7 +293,14 @@ func genContent(dest, pkgName, license string) ([]byte, error) {
 
 // fixConst checks untyped constant value, converting it if necessary to avoid overflow
 func fixConst(name string, val constant.Value) string {
-	if val.Kind() == constant.Int {
+	switch val.Kind() {
+	case constant.Float:
+		str := val.ExactString()
+		if _, err := strconv.ParseFloat(str, 32); err == nil {
+			return "float32(" + name + ")"
+		}
+		return name
+	case constant.Int:
 		str := val.ExactString()
 		i, err := strconv.ParseInt(str, 0, 64)
 		if err == nil {
@@ -302,8 +317,10 @@ func fixConst(name string, val constant.Value) string {
 		if err == nil {
 			return "uint64(" + name + ")"
 		}
+		return name
+	default:
+		return name
 	}
-	return name
 }
 
 // genLicense generates the correct LICENSE header text from the provided
@@ -344,7 +361,8 @@ func Parse(outDir string, pkgs ...string) {
 	for _, pkg := range pkgs {
 		content, err := genContent(dest, pkg, license)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			continue
 		}
 
 		var oFile string
