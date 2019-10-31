@@ -2,6 +2,7 @@ package post
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"runtime"
 	"sync"
@@ -52,7 +53,7 @@ func (this *RpcObject) Init(qSize uint64) {
 // but must be an `func(args ...interface{})` type in strict mode without reflect.
 func (this *RpcObject) Register(id string, f interface{}) {
 	if _, ok := this.Functions[id]; ok {
-		panic(fmt.Sprintf("function id %v: already registered", id))
+		log.Println(fmt.Sprintf("function id %v: already registered", id))
 	}
 	this.Functions[id] = f
 }
@@ -113,7 +114,7 @@ LOOP:
 		switch f.(type) {
 		case string:
 			if function, ok = this.Functions[f.(string)]; !ok {
-				fmt.Printf("Remote function(%v) not found\n", f)
+				log.Println("Remote function(%v) not found", f)
 				continue LOOP
 			}
 		default:
