@@ -1,7 +1,7 @@
 package timer
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/TianQinS/fastapi/basic"
@@ -61,7 +61,7 @@ func (this *TimerMap) Put(duration int64, f interface{}, postArgs []interface{})
 	}
 	ok, quantity := this.itemQueue.Put(item)
 	if !ok {
-		fmt.Printf("[CallAfterSeconds] put fail quantity=%d", quantity)
+		log.Printf("[CallAfterSeconds] put fail quantity=%d", quantity)
 	}
 	return item
 }

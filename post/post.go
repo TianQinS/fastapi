@@ -3,6 +3,7 @@ package post
 
 import (
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -66,7 +67,7 @@ func (this *Post) Size() int {
 
 func (this *Post) Register(id string, f interface{}) {
 	if _, ok := this.Functions[id]; ok {
-		panic(fmt.Sprintf("function id %v: already registered", id))
+		log.Panicln(fmt.Sprintf("function id %v: already registered", id))
 	}
 	this.Functions[id] = f
 }

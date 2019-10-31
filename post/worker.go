@@ -3,6 +3,7 @@ package post
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"sync"
 
@@ -45,7 +46,7 @@ func getJobWorker(group string) (worker *JobWorker) {
 	if worker == nil {
 		JobWorkersLock.Lock()
 		worker = newJobWorker()
-		fmt.Printf("[NewJobWorker] group=%s\n", group)
+		log.Printf("[NewJobWorker] group=%s\n", group)
 		JobWorkers[group] = worker
 		JobWorkersLock.Unlock()
 	}
@@ -111,12 +112,12 @@ func Close() bool {
 		GPost.Close()
 	}
 	// Close all job queue workers
-	fmt.Println("Waiting for all async job workers to be cleared ...")
+	log.Println("Waiting for all async job workers to be cleared ...")
 	JobWorkersLock.Lock()
 	if len(JobWorkers) > 0 {
 		for group, worker := range JobWorkers {
 			close(worker.jobQueue)
-			fmt.Printf("Clear %s\n", group)
+			log.Printf("Clear %s\n", group)
 		}
 		JobWorkers = map[string]*JobWorker{}
 		cleared = true
