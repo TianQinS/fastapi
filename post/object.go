@@ -114,7 +114,7 @@ LOOP:
 		switch f.(type) {
 		case string:
 			if function, ok = this.Functions[f.(string)]; !ok {
-				log.Println("Remote function(%v) not found", f)
+				log.Printf("Remote function(%v) not found\n", f)
 				continue LOOP
 			}
 		default:
