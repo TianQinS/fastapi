@@ -86,9 +86,15 @@ func (this *entry) parse(atom string, seq int) int64 {
 	} else if strings.Contains(atom, ",") {
 		// Discrete numbers like 4,6
 		tmp := strings.Split(atom, ",")
+		tmpDict := make(map[int]int, len(tmp))
 		for _, t := range tmp {
 			if val, err := strconv.Atoi(t); err == nil {
-				values = append(values, val)
+				if val >= start && val <= end {
+					if _, ok := tmpDict[val]; !ok {
+						tmpDict[val] = 1
+						values = append(values, val)
+					}
+				}
 			}
 		}
 	} else {
