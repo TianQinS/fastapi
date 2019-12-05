@@ -1,6 +1,8 @@
 package basic
 
 import (
+	"bytes"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -18,7 +20,10 @@ func NewFile(filePath string) (*os.File, error) {
 	return f, nil
 }
 
-func Exec(cmd string) (out []byte, err error) {
+func Exec(cmd string) ([]byte, error) {
+	var err error
+	var out bytes.Buffer
+	var stderr bytes.Buffer
 	cmd1 := "/bin/sh"
 	cmd2 := "-c"
 	if runtime.GOOS == "windows" {
@@ -26,6 +31,13 @@ func Exec(cmd string) (out []byte, err error) {
 		cmd2 = "/C"
 	}
 	p := exec.Command(cmd1, cmd2, cmd)
-	out, err = p.Output()
-	return
+	// out, err = p.Output()
+
+	p.Stdout = &out
+	p.Stderr = &stderr
+	if err = p.Run(); err != nil {
+		log.Println(stderr.String())
+		return stderr.Bytes(), err
+	}
+	return out.Bytes(), err
 }
