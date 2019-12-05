@@ -9,7 +9,7 @@ import (
 
 const (
 	// EsQueue Capacity.
-	ITEM_QUEUE_CAPACITY = 1024 * 1024
+	ITEM_QUEUE_CAPACITY = 1024 * 100
 	// the initial numbers of goroutine.
 	ORI_ROUTINE_NUM = 3
 )
