@@ -26,9 +26,16 @@ func Exec(cmd string) ([]byte, error) {
 	var stderr bytes.Buffer
 	cmd1 := "/bin/sh"
 	cmd2 := "-c"
-	if runtime.GOOS == "windows" {
-		cmd1 = "cmd"
-		cmd2 = "/C"
+	switch runtime.GOOS {
+	case "windows":
+		{
+			cmd1 = "cmd"
+			cmd2 = "/C"
+		}
+	case "freebsd":
+		{
+			cmd1 = "/bin/csh"
+		}
 	}
 	p := exec.Command(cmd1, cmd2, cmd)
 	// out, err = p.Output()
