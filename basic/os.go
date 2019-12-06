@@ -34,7 +34,7 @@ func Exec(cmd string) ([]byte, error) {
 		}
 	case "freebsd":
 		{
-			cmd1 = "/bin/csh"
+			// cmd1 = "/bin/csh"
 		}
 	}
 	p := exec.Command(cmd1, cmd2, cmd)
