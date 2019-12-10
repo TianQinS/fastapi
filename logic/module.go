@@ -10,11 +10,11 @@ type Module struct {
 	Name  string
 }
 
-func (this *Module) Register(name, doc string, meth func(self, args *python.PyObject) *python.PyObject) {
+func (this *Module) Register(name, doc string, flag python.MethodDefFlags, meth func(self, args *python.PyObject) *python.PyObject) {
 	this.Meths = append(this.Meths, python.PyMethodDef{
 		Name:  name,
 		Meth:  meth,
-		Flags: 1,
+		Flags: flag,
 		Doc:   doc,
 	})
 }

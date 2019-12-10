@@ -14,7 +14,7 @@ func init() {
 	}
 }
 
-func ParseAtom(val interface{}) *python.PyObject {
+func ParseGo(val interface{}) *python.PyObject {
 	switch val.(type) {
 	case int:
 		return python.PyInt_FromLong(val.(int))
@@ -35,7 +35,7 @@ func ParseAtom(val interface{}) *python.PyObject {
 	case float32:
 		return python.PyLong_FromDouble(float64(val.(float32)))
 	}
-	return nil
+	return python.Py_None
 }
 
 func FetchErr() string {
@@ -66,21 +66,31 @@ func GetFunc(module, function string) (*python.PyObject, error) {
 	return f, nil
 }
 
+func ParsePy(dat *python.PyObject) (ret interface{}, err error) {
+	func() {
+		if e, ok := recover().(error); ok {
+			err = e
+		}
+	}()
+	ret = dat.Type().String()
+	return
+}
+
 func CallFunc(function *python.PyObject, args []interface{}, kwargs map[string]interface{}) (interface{}, error) {
 	tArgs := python.PyTuple_New(len(args))
 	for i, arg := range args {
-		python.PyTuple_SetItem(tArgs, i, ParseAtom(arg))
+		python.PyTuple_SetItem(tArgs, i, ParseGo(arg))
 	}
 	tKwargs := python.PyDict_New()
 	for key, val := range kwargs {
 		if err := python.PyDict_SetItem(
 			tKwargs,
 			python.PyString_FromString(key),
-			ParseAtom(val),
+			ParseGo(val),
 		); err != nil {
 			return nil, err
 		}
 	}
 	out := function.Call(tArgs, tKwargs)
-	return out, nil
+	return ParsePy(out)
 }
