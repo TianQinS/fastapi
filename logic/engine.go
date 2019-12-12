@@ -3,6 +3,7 @@ package logic
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/sbinet/go-python"
 )
@@ -34,8 +35,10 @@ func ParseGo(val interface{}) *python.PyObject {
 		return python.PyLong_FromDouble(val.(float64))
 	case float32:
 		return python.PyLong_FromDouble(float64(val.(float32)))
+	case nil:
+		return python.Py_None
 	}
-	return python.Py_None
+	return val.(*python.PyObject)
 }
 
 func FetchErr() string {
@@ -67,12 +70,16 @@ func GetFunc(module, function string) (*python.PyObject, error) {
 }
 
 func ParsePy(dat *python.PyObject) (ret interface{}, err error) {
-	func() {
+	defer func() {
 		if e, ok := recover().(error); ok {
 			err = e
 		}
 	}()
 	ret = dat.Type().String()
+	switch ret.(type) {
+	case string:
+		log.Println(ret)
+	}
 	return
 }
 

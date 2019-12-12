@@ -30,6 +30,15 @@ func (this *Module) Update(name string) (*python.PyObject, error) {
 	}
 }
 
+func (this *Module) SetObjectAttr(name string, value *python.PyObject) int {
+	return this.Mod.SetAttrString(name, value)
+}
+
+func (this *Module) SetClassAttr(name string, value *python.PyObject) int {
+	key := python.PyString_FromString(name)
+	return this.Mod.GenericSetAttr(key, value)
+}
+
 func (this *Module) IsValid() bool {
 	return this.Name != ""
 }
